@@ -35,4 +35,4 @@ Welcome to **Kaiitzn Pocket Pay (KPP)**! This guide will help you navigate the p
 - **Analytics**: Track your success rate, global rank, and earnings trend in the Analytics tab of the Earn section.
 
 ---
-*Need help? Contact the KPP Support Team at support@kpp-campus.edu*
+*Need help? Contact the KPP Support Team at twishamishraaaa@gmail.com For Twisha kaiitzn*
