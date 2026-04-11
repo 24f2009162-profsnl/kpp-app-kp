@@ -1,0 +1,5 @@
+{
+  "name": "Kaiitzn Pocket Pay (KPP)",
+  "description": "A campus-first micro-payments and rewards platform built on the Stellar network for IIT Madras students to earn, share, and spend.",
+  "requestFramePermissions": ["camera"]
+}

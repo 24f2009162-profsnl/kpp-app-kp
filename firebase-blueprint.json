@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "Stores user profile information and wallet state.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string", "description": "The student's unique ID." },
+        "kppId": { "type": "string", "description": "The KPP internal ID." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "email": { "type": "string", "description": "The user's email address." },
+        "avatar": { "type": "string", "description": "URL to the user's avatar." },
+        "xlm": { "type": "string", "description": "Stellar XLM balance." },
+        "points": { "type": "string", "description": "KPP Points balance." },
+        "kppTokens": { "type": "string", "description": "KPP Tokens balance." },
+        "isDarkMode": { "type": "boolean", "description": "User's theme preference." }
+      },
+      "required": ["studentId", "kppId"]
+    },
+    "transactions": {
+      "title": "Transaction",
+      "description": "Record of a wallet transaction.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user ID who owns this transaction." },
+        "type": { "type": "string", "enum": ["send", "receive", "reward", "convert", "transfer"] },
+        "target": { "type": "string" },
+        "amount": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["Completed", "Pending", "Rejected", "Revisions Needed"] },
+        "hash": { "type": "string" }
+      },
+      "required": ["uid", "type", "amount", "date"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "users",
+      "description": "User profile document."
+    },
+    "transactions/{transactionId}": {
+      "schema": "transactions",
+      "description": "Individual transaction records."
+    }
+  }
+}

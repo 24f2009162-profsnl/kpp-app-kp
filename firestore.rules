@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (matches Firebase Auth UID)
+    // Fields:
+    //   - studentId: string (required)
+    //   - kppId: string (required)
+    //   - displayName: string (optional)
+    //   - email: string (optional)
+    //   - avatar: string (optional)
+    //   - xlm: string (required)
+    //   - points: string (required)
+    //   - kppTokens: string (required)
+    //   - isDarkMode: bool (optional)
+    //
+    // Collection: transactions
+    // Document ID: {transactionId}
+    // Fields:
+    //   - uid: string (required, immutable)
+    //   - type: string (required, enum: send, receive, reward, convert, transfer)
+    //   - target: string (required)
+    //   - amount: string (required)
+    //   - date: string (required)
+    //   - time: string (required)
+    //   - status: string (required, enum: Completed, Pending, Rejected, Revisions Needed)
+    //   - hash: string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "24f2009162@ds.study.iitm.ac.in" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return hasRequiredFields(['studentId', 'kppId', 'xlm', 'points', 'kppTokens']) &&
+             data.studentId is string && data.studentId.size() > 0 && data.studentId.size() < 50 &&
+             data.kppId is string && data.kppId.size() > 0 && data.kppId.size() < 50 &&
+             data.xlm is string && data.points is string && data.kppTokens is string;
+    }
+
+    function isValidTransaction(data) {
+      return hasRequiredFields(['uid', 'type', 'target', 'amount', 'date', 'time', 'status']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.type in ['send', 'receive', 'reward', 'convert', 'transfer'] &&
+             data.status in ['Completed', 'Pending', 'Rejected', 'Revisions Needed'] &&
+             data.amount is string && data.amount.size() < 100;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified();
+      allow delete: if isAdmin();
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow update: if isDocOwner() && isValidTransaction(request.resource.data) && uidNotModified();
+      allow delete: if isAdmin();
+    }
+  }
+}
