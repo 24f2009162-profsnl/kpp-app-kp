@@ -17,6 +17,7 @@ const firebaseConfig = {
   storageBucket: cleanValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
   messagingSenderId: cleanValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
   appId: cleanValue(import.meta.env.VITE_FIREBASE_APP_ID)
+  measurementId: cleanValue(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID) 
 };
 
 // Check for the bare minimum to initialize
