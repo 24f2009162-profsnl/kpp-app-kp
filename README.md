@@ -13,7 +13,7 @@ Kaiitzn Pocket Pay (KPP) is a campus-first micro-payments and rewards platform b
 - **Feedback Form**: [Google Form](https://forms.gle/gAWKNMU7fezn4Crb7)
 - **Feedback Data**: [Excel Sheet / Responses](https://docs.google.com/spreadsheets/d/1UJwscI9xSlXePAYfe2FeYVC7tYA18eYkRnT0YD3oRoI/edit?usp=sharing)
 
-### 🏗️ Architecture Document
+### 🏗️ Architecture Document for Level 4,5,6
 KPP is built with a modular architecture focusing on high-frequency micro-payments:
 1. **Frontend Layer**: React 19 + Vite + Tailwind 4. Uses `Stellar Wallets Kit` for non-custodial wallet connection.
 2. **State Management**: Custom store with `localStorage` persistence for MVP simulation of on-chain data.
