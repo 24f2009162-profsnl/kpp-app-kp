@@ -17,6 +17,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 // Pages
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Earn from './pages/Earn';
 import Pay from './pages/Pay';
@@ -266,7 +267,7 @@ export default function App() {
 
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <Routes>
-            <Route path="/" element={state.studentId ? <Dashboard /> : <WelcomeHero onSignIn={() => setShowLoginModal(true)} />} />
+            <Route path="/" element={state.studentId ? <Dashboard /> : <Landing />} />
             <Route path="/earn" element={state.studentId ? <Earn /> : <Navigate to="/" />} />
             <Route path="/pay" element={state.studentId ? <Pay /> : <Navigate to="/" />} />
             <Route path="/forum" element={state.studentId ? <Forum /> : <Navigate to="/" />} />

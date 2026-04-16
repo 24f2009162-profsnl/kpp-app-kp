@@ -23,15 +23,25 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20">
-      <header className="text-center space-y-4">
-        <div className="inline-flex p-4 rounded-[2rem] bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 mb-4">
-          <Trophy size={48} strokeWidth={2.5} />
+    <div className="max-w-4xl mx-auto space-y-8 pb-20 p-8 rounded-[3rem] pop-art-pattern border-4 border-slate-900 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+      <header className="text-center space-y-4 bg-white p-10 rounded-[3rem] border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+        <div className="absolute left-0 top-0 bottom-0 w-1/4 opacity-10 pointer-events-none hidden md:block">
+          <img 
+            src="https://picsum.photos/seed/leaderboard-collage/400/400" 
+            alt="Decorative" 
+            className="h-full w-full object-cover grayscale contrast-150"
+            referrerPolicy="no-referrer"
+          />
         </div>
-        <h1 className="text-4xl font-black text-slate-900 dark:text-white">Campus Hall of Fame</h1>
-        <p className="text-slate-500 dark:text-slate-400 font-medium max-w-lg mx-auto">
-          The top contributors, earners, and campus legends. Are you on the list?
-        </p>
+        <div className="relative z-10">
+          <div className="inline-flex p-4 rounded-[2rem] bg-amber-400 text-slate-900 border-4 border-slate-900 mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <Trophy size={48} strokeWidth={2.5} />
+          </div>
+          <h1 className="text-5xl font-black text-slate-900 italic uppercase tracking-tighter">Campus Hall of Fame</h1>
+          <p className="text-slate-600 font-bold max-w-lg mx-auto">
+            The top contributors, earners, and campus legends. Are you on the list?
+          </p>
+        </div>
       </header>
 
       {/* Top 3 Podium */}

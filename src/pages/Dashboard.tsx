@@ -258,19 +258,23 @@ export default function Dashboard() {
   const chartData = (state.pockets || []).map(p => ({ name: p.name, value: p.balance, color: p.color.replace('bg-', '') }));
 
   return (
-    <div className="space-y-8 pb-20">
-      <header className="flex justify-between items-end">
+    <div className="space-y-8 pb-20 min-h-screen moon-arc-container p-8 rounded-[3rem] relative overflow-hidden">
+      {/* Decorative Arcs */}
+      <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[120%] aspect-square rounded-full border border-indigo-500/10 pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[120%] aspect-square rounded-full border border-blue-500/10 pointer-events-none" />
+
+      <header className="flex justify-between items-end relative z-10">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">
-            {state.studentId ? `Hello, ${state.studentId}` : 'Hello, Guest'}! 👋
+          <h1 className="text-4xl font-black text-white tracking-tighter">
+            {state.studentId ? `HELLO, ${state.studentId}` : 'HELLO, GUEST'}! 👋
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Welcome back to your Campus Wallet.</p>
+          <p className="text-slate-400 font-medium tracking-tight">Welcome back to your Campus Wallet.</p>
         </div>
         <div className="hidden sm:block text-right">
-          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Stellar Network</p>
-          <div className="text-sm font-bold text-green-500 flex items-center justify-end gap-1">
+          <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Stellar Network</p>
+          <div className="text-sm font-black text-green-500 flex items-center justify-end gap-2">
             <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            Testnet Active
+            TESTNET ACTIVE
           </div>
         </div>
       </header>

@@ -58,15 +58,23 @@ export default function Forum() {
   ];
 
   return (
-    <div className="space-y-8 pb-20">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Campus Forum</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Discuss Stellar, micro-earning, and campus life.</p>
+    <div className="space-y-8 pb-20 p-8 rounded-[3rem] pop-art-pattern border-4 border-slate-900 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-8 rounded-3xl border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-20 pointer-events-none hidden md:block">
+          <img 
+            src="https://picsum.photos/seed/student-collage/400/400" 
+            alt="Decorative" 
+            className="h-full w-full object-cover grayscale contrast-125"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-black text-slate-900 italic uppercase tracking-tighter">Campus Forum</h1>
+          <p className="text-slate-600 font-bold">Discuss Stellar, micro-earning, and campus life.</p>
         </div>
         <button 
           onClick={() => setShowNewPost(true)}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-4 text-sm font-black text-white shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-4 text-sm font-black text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
         >
           <Plus size={20} /> Start Discussion
         </button>

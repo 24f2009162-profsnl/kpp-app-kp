@@ -92,11 +92,17 @@ export default function Earn() {
   };
 
   return (
-    <div className="space-y-8 pb-20">
-      <header className="space-y-6">
+    <div className="space-y-8 pb-20 bg-slate-950 p-8 rounded-[3rem] border-4 border-indigo-500/30 shadow-[0_0_50px_rgba(99,102,241,0.1)] relative overflow-hidden">
+      {/* ATM Background Effects */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-pulse" />
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-pulse" />
+      <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-indigo-500 to-transparent opacity-20" />
+      <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-transparent via-indigo-500 to-transparent opacity-20" />
+
+      <header className="space-y-6 relative z-10">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">Campus Economy</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">Contribute to campus life and earn KPP Points.</p>
+          <h1 className="text-4xl font-black text-white neon-text-purple tracking-tighter">CAMPUS ECONOMY</h1>
+          <p className="text-indigo-300 font-bold uppercase text-xs tracking-widest opacity-70">Terminal ID: KPP-ATM-001</p>
         </div>
         
         {/* 4-Pallet Grid for Tabs */}

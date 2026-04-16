@@ -93,18 +93,22 @@ export default function TransactionHistory() {
   };
 
   return (
-    <div className="space-y-8 pb-20">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-8 pb-20 min-h-screen moon-arc-container p-8 rounded-[3rem] relative overflow-hidden">
+      {/* Decorative Arcs */}
+      <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[120%] aspect-square rounded-full border border-indigo-500/10 pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[120%] aspect-square rounded-full border border-blue-500/10 pointer-events-none" />
+
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between relative z-10">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">On-Chain Ledger</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Track your campus economy in real-time.</p>
+          <h1 className="text-4xl font-black text-white tracking-tighter">ON-CHAIN LEDGER</h1>
+          <p className="text-slate-400 font-medium tracking-tight">Track your campus economy in real-time.</p>
         </div>
         <div className="flex gap-2">
           <button 
             onClick={handleExport}
-            className="flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-3 text-sm font-black text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-6 py-4 text-sm font-black text-white hover:bg-white/10 transition-all active:scale-95"
           >
-            <Download size={18} /> Export
+            <Download size={20} /> Export CSV
           </button>
         </div>
       </header>

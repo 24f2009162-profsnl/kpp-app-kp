@@ -80,10 +80,14 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20">
-      <header className="flex flex-col md:flex-row items-center gap-8 bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-100 dark:border-slate-800">
+    <div className="max-w-4xl mx-auto space-y-8 pb-20 min-h-screen moon-arc-container p-8 rounded-[3rem] relative overflow-hidden">
+      {/* Decorative Arcs */}
+      <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[120%] aspect-square rounded-full border border-indigo-500/10 pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[120%] aspect-square rounded-full border border-blue-500/10 pointer-events-none" />
+
+      <header className="flex flex-col md:flex-row items-center gap-8 glass-card p-10 rounded-[3rem] relative z-10">
         <div className="relative group">
-          <div className="h-32 w-32 rounded-[2.5rem] bg-indigo-600 overflow-hidden flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-indigo-200">
+          <div className="h-40 w-40 rounded-[3rem] bg-indigo-600 overflow-hidden flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-indigo-500/20">
             {state.avatar ? (
               <img src={state.avatar} alt="Avatar" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
             ) : (
@@ -92,34 +96,39 @@ export default function Profile() {
           </div>
           <button 
             onClick={() => setShowAvatarModal(true)}
-            className="absolute -bottom-2 -right-2 h-10 w-10 rounded-2xl bg-indigo-600 border-4 border-white dark:border-slate-900 flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"
+            className="absolute -bottom-2 -right-2 h-12 w-12 rounded-2xl bg-indigo-600 border-4 border-slate-950 flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"
           >
-            <Camera size={20} />
+            <Camera size={24} />
           </button>
         </div>
         
-        <div className="flex-1 text-center md:text-left space-y-2">
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">{state.studentId}</h1>
+        <div className="flex-1 text-center md:text-left space-y-4">
+          <div>
+            <h1 className="text-4xl font-black text-white tracking-tighter">{state.studentId}</h1>
+            <p className="text-indigo-400 font-black uppercase text-xs tracking-widest">Verified Student</p>
+          </div>
+          
+          <div className="flex flex-wrap justify-center md:justify-start gap-3">
+            <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
+              <span className="text-xs font-black text-slate-400 uppercase tracking-widest">KPP ID:</span>
+              <code className="text-sm font-mono text-indigo-400">{state.kppId?.slice(0, 12)}...</code>
+              <button onClick={copyToClipboard} className="text-slate-500 hover:text-white transition-colors">
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            </div>
+          </div>
+
           <div className="flex flex-wrap justify-center md:justify-start gap-2">
             {state.badges.map(badge => (
-              <span key={badge} className="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900/50">
+              <span key={badge} className="px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-400/20">
                 {badge}
               </span>
             ))}
             {userAwards.map((award, i) => (
-              <span key={i} title={award} className="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900/50 flex items-center gap-1">
+              <span key={i} title={award} className="px-3 py-1 rounded-full bg-indigo-400/10 text-indigo-400 text-[10px] font-black uppercase tracking-widest border border-indigo-400/20 flex items-center gap-1">
                 {AWARDS_ICONS[award] || '🏆'} {award}
               </span>
             ))}
-          </div>
-          <div className="pt-2 flex items-center justify-center md:justify-start gap-3">
-            <div className="px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">KPP ID</span>
-              <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{state.kppId}</span>
-              <button onClick={copyToClipboard} className="text-indigo-600 hover:text-indigo-700 transition-colors">
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-              </button>
-            </div>
           </div>
         </div>
       </header>
