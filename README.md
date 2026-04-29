@@ -130,15 +130,20 @@ For detailed instructions on how to use KPP, please refer to the [USER_MANUAL.md
 # 🥋 Level 6: Black Belt Submission
 This section outlines the production-readiness of KAiiTzn for the final Black Belt evaluation.
 
-| Requirement | Status | Link / Proof |
+| Requirement | Status | Proof |
 | :--- | :--- | :--- |
-| **30+ Verified Users** | ✅ Complete | [Testnet Feedback Table] |
-| **User Onboarding Data** | ✅ Complete | [Google Form Responses (Gsheets)] |
-| **Advanced Feature** | ✅ Implemented | [Account Abstraction & Custom Auth] |
-| **Meaningful Commits** | ✅ 33 Commits | [Repository History] |
-| **Metrics Dashboard** | ✅ Live | [View Metrics Dashboard in README]|
-| **Security Checklist** | ✅ Completed | [Security Audit Section] |
-| **Community Contribution** | ⏳ Active Awaiting | [Twitter/X Post Link]|
+| **30+ Verified Users** | ✅ Complete |Testnet Feedback Table|
+| **User Onboarding Data** | ✅ Complete |Google Form Responses (Gsheets)|
+| **Advanced Feature** | ✅ Implemented |Account Abstraction & Custom Auth|
+| **Meaningful Commits** | ✅ 33 Commits | Repository History |
+| **Metrics Dashboard** | ✅ Live | View Metrics Dashboard in README|
+| **Security Checklist** | ✅ Completed |Security Audit Section|
+
+### 🌐 Community Contribution
+Our journey to production-readiness and onboarding 30+ users was shared with the broader Web3 community on X (Twitter).
+
+[![KAiiTzn Community Post](./assets/twiiter.png)](https://x.com/verseshriyam)
+*Official announcement of KAiiTzn scaling to production-readiness on the Stellar Network.*
 
 ---
 ## 🚀 Advanced Feature: Account Abstraction (Custom Auth)
