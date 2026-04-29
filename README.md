@@ -59,27 +59,33 @@ The MVP was tested with 30+ real testnet users. Their feedback was collected and
 | Alina | alinarajofficial@gmail.com | GDS9...M4 | "The horizontal category slider is a major win for one-handed use." | `9da3246` |
 | Devina Vinay | 24f2001022@ds.study.iitm.ac.in | GBA2...R5 | "The 'Privacy Mode' eye icon is a clever feature for campus use." | `6b7ad7d` |
 
-### 📊 Live Metrics Dashboard
-![Live Metrics Dashboard](./assets/dashboard.png)
-*Live Metrics system showing real-time user activity and success rates.*
+## 🖼️ Project Gallery & Technical Proof
 
-### 🎨 Neon Pink Theme
-![Neon Pink Theme](./assets/theme.png)
-*The new Neon Pink Light mode theme requested by users.*
+### 📱 User Interface & Experience
+| **Dashboard Metrics** | **Neon Pink Theme** | **Redemption Store** |
+|:---:|:---:|:---:|
+| ![Dashboard](./assets/dashboard.png) | ![Theme](./assets/theme.png) | ![Store](./assets/store.png) |
+| *Real-time success rates* | *Requested High-Contrast UI* | *Campus Essentials* |
 
-### 🛍️ Redemption Store
-![Redemption Store](./assets/store.png)
-*Redeem points for college essentials and canteen vouchers.*
+| **Mobile UI** | **Avatar Studio** | **KPP Interface** |
+|:---:|:---:|:---:|
+| ![Mobile](./assets/intercontact.png) | ![Camera](./assets/camera.jpg) | ![KPP](./assets/interkpp.png) |
+| *Seamless Mobile Navigation* | *Identity Verification* | *Points Management* |
 
-### 📱 Mobile Experience
-![Mobile UI](./assets/mobile.png)
-*Responsive mobile interface designed for on-the-go campus use.*
+---
 
-### ⚙️ Technical Implementation & Proof
-| System Structure | Transaction Ledger |
-| :---: | :---: |
-| ![Structure](./assets/structure.png) | ![Transactions](./assets/transaction.png) |
-| *Project Directory Structure* | *On-chain Transaction Proof* |
+### ⚙️ Backend & Architecture Proof
+To provide full transparency for the Level 5 Review, below are the structural and logic proofs of the KAiiTzn ecosystem.
+
+| **System Structure** | **Transaction Ledger** |
+|:---:|:---:|
+| ![Structure](./assets/structure.png) | ![Transaction](./assets/transaction.png) |
+| *Core Directory Tree* | *Verified On-Chain Logs* |
+
+| **Application Logic** | **Basic Module Schema** |
+|:---:|:---:|
+| ![Logic](./assets/logic.png) | ![Module Schema](./assets/module%20basic.png) |
+| *Smart Contract Logic* | *Modular Component Design* |
 
 ### 🛠️ Iterations Based on Feedback online via diff state friends 
 - **Iteration 1**: Added persistent state via `localStorage`.
