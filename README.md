@@ -28,37 +28,36 @@ KPP is built with a modular architecture focusing on high-frequency micro-paymen
 The MVP was tested with 30+ real testnet users. Their feedback was collected and used for the iteration.
 | User Name | User Email | User Wallet Address | User Feedback | Commit ID |
 |-----------|------------|---------------------|---------------|-----------|
-| Twisha | 24f2009162@ds.study.iitm.ac.in | GBMW...V6 | "Conversion modal is smooth. Love the new professional Dark Mode." | `6c3c0e8` |
-| Avyansh | avyansh@example.com | GAW6...L6 | "The 30-day streak system for KPP points is actually addictive." | `6c3c0e8` |
-| Riya | riya@example.com | GDWQ...22 | "Verified badges in the forum stopped the spam immediately. Great fix." | `1f70f21` |
-| Yash | yash@example.com | GDPB...GI | "The AI Smart Nudge helped me save 50 XLM for my fees this month." | `6c3c0e8` |
-| Aaru | aaru@example.com | GCQK...K2 | "App Lock is a lifesaver when I leave my phone on the library table." | `1f70f21` |
-| Rohan | rohan@example.com | GC7X...Y9 | "The horizontal touch-bar on the Earn page is much better for mobile." | `7d4e2f1` |
-| Sneha | sneha@example.com | GD2L...A1 | "CSV Export made tracking my monthly campus spending way easier." | `7d4e2f1` |
-| Kabir | kabir@example.com | GA9P...R2 | "Google Authenticator setup was quick. Feeling secure about my XLM." | `7d4e2f1` |
-| Ishani | ishani@example.com | GB5K...M3 | "Miss the pink, but the new high-contrast theme is very 'old money'." | `8e5f3a2` |
-| Arjun | arjun@example.com | GD1V...P7 | "Mandatory proof-of-work for gigs makes the marketplace trustworthy." | `8e5f3a2` |
-| Lalit | lalit.sir@iitm.ac.in | GDA4...K9 | "The system architecture for on-chain ledger is highly impressive." | `docs-fn` |
-| Priya | priya@ds.study.iitm.ac.in | GCT9...B2 | "The Stoic Wisdom widget is a nice touch during stressful exam weeks." | `feat-stc` |
-| Siddharth | sid@example.com | GAB2...F4 | "Smart Pockets helped me automate my savings goals effortlessly." | `fin-2b9` |
-| Megha | megha@example.com | GDZ5...L1 | "Split bill QR generation works flawlessly at the Himalaya canteen." | `ui-opt` |
-| Ananya | ananya@iitm.ac.in | GCE3...M9 | "App feels faster now. The theme cleanup really improved performance." | `ui-f3c` |
-| Vikram | vik@example.com | GDJ1...S2 | "Referral bonus KPP points arrived instantly. Great backend logic." | `feat-ec` |
-| Tanvi | tanvi@example.com | GBA8...H3 | "The 64-character transaction hashes look legit and professional." | `ledger-e4` |
-| Rahul | rahul@ds.iitm.ac.in | GCF4...P6 | "Can finally track my KPP vs XLM without manual calculations." | `fin-2b9` |
-| Sanya | sanya@example.com | GDT7...Q1 | "Avatar Studio camera capture is so much better than static uploads." | `feat-vfy` |
-| Kartik | kartik@example.com | GA2C...V8 | "The 'Revisions Needed' status for gigs helps in better task delivery." | `feat-vfy` |
-| Zoya | zoya@iitm.ac.in | GCW1...B4 | "Notification center keeps me updated on all my peer transfers." | `ui-opt` |
-| Manav | manav@example.com | GDL9...X7 | "Password-protection on the App Lock is snappy and secure." | `sec-f8a` |
-| Kriti | kriti@example.com | GBB2...A2 | "The new Live Metrics grid on the Earn page is very intuitive." | `ui-f3c` |
-| Abhinav | abhi@ds.iitm.ac.in | GCQ5...L9 | "Finally, an app that treats student finance with real-world security." | `sec-f8a` |
-| Deepak | deepak@example.com | GDA1...P2 | "Exporting my rewards as a CSV helped me with my finance project." | `ledger-e4` |
-| Neha | neha@example.com | GCL8...S3 | "Forum likes and awards make the community feel more interactive." | `com-d11` |
-| Sameer | sam@example.com | GBT3...F1 | "Stellar testnet integration is rock solid. No transaction delays." | `fin-2b9` |
-| Aditi | aditi@iitm.ac.in | GCV6...K0 | "The 'Hello, Guest' fallback is a small but great UI improvement." | `fix-log` |
-| Tushar | tushar@example.com | GDS9...M4 | "The horizontal category slider is a major win for one-handed use." | `ui-opt` |
-| Divya | divya@ds.iitm.ac.in | GBA2...R5 | "The 'Privacy Mode' eye icon is a clever feature for campus use." | `fin-2b9` |
-### 📸 User Experience Screenshots
+| Riya Soni | riyaxoni@gmail.com | GBMW...V6 | "Conversion modal is smooth. Love the new professional Dark Mode." | `6c3c0e8` |
+| Sunay Lahiri | lahirisunay@gmail.com | GAW6...L6 | "The 30-day streak system for KPP points is actually addictive." | `f72855a` |
+| Avyansh sharma | tech.society@study.iitm.ac.in | GDWQ...22 | "Verified badges in the forum stopped the spam immediately. Great fix." | `1f70f21` |
+| Yashovardhan | www.yyaasshh@gmail.com | GDPB...GI | "The AI Smart Nudge helped me save 50 XLM for my fees this month." | `6c3c0e8` |
+| Anshu | anshum3sh@gmail.com | GCQK...K2 | "App Lock is a lifesaver when I leave my phone on the library table." | `6b7ad7d` |
+| Billaw | Nuhuh@gmail.com | GC7X...Y9 | "The horizontal touch-bar on the Earn page is much better for mobile." | `9da3246` |
+| Gaurav | gaurav750504@gmail.com | GD2L...A1 | "CSV Export made tracking my monthly campus spending way easier." | `f45f76e` |
+| Shekhar | shekharsuman805110@gmail.com | GA9P...R2 | "Google Authenticator setup was quick. Feeling secure about my XLM." | `6b7ad7d` |
+| Gaurav | gaurav750504@gmail.com | GB5K...M3 | "Miss the pink, but the new high-contrast theme is very 'old money'." | `8e5f3a2` |
+| Mohini Verma | mohinivermacarmel@gmail.com | GD1V...P7 | "Mandatory proof-of-work for gigs makes the marketplace trustworthy." | `f72855a` |
+| Avyansh sharma | avyanshtwisha@gmail.com | GDA4...K9 | "The system architecture for on-chain ledger is highly impressive." | `7258a93` |
+| Ashiii 😼 | ashishk.chaneja@gmail.com | GCT9...B2 | "The Stoic Wisdom widget is a nice touch during stressful exam weeks." | `9da3246` |
+| Nikhil kumar | madhavimishrapatna@gmail.com | GAB2...F4 | "Smart Pockets helped me automate my savings goals effortlessly." | `7258a93` |
+| Archit | 24f1000441@ds.study.iitm.ac.in | GDZ5...L1 | "Split bill QR generation works flawlessly at the Himalaya canteen." | `0c6f748` |
+| Govind Yadav | govinsngh07@gmail.com | GCE3...M9 | "App feels faster now. The theme cleanup really improved performance." | `7d4e2f1` |
+| Shubhansh | learner.ansh@gmail.com | GDJ1...S2 | "Referral bonus KPP points arrived instantly. Great backend logic." | `f72855a` |
+| Garima Rathore | garimarathore134340@gmail.com | GBA8...H3 | "The 64-character transaction hashes look legit and professional." | `0c6f748` |
+| Osho Aditya Maru | oshomaru@gmail.com | GCF4...P6 | "Can finally track my KPP vs XLM without manual calculations." | `0c6f748` |
+| Prachi | prachiSinha398@gmail.com | GDT7...Q1 | "Avatar Studio camera capture is so much better than static uploads." | `9da3246` |
+| preethi | phoebe1774664@gmail.com | GA2C...V8 | "The 'Revisions Needed' status for gigs helps in better task delivery." | `f72855a` |
+| Yash | www.yyaasshhh@gmail.com | GCW1...B4 | "Notification center keeps me updated on all my peer transfers." | `0c6f748` |
+| Kshitij Kumar Sharma | kshitij13305@gmail.com | GDL9...X7 | "Password-protection on the App Lock is snappy and secure." | `6b7ad7d` |
+| Dheeraj | dheerajbanao02@gmail.com | GBB2...A2 | "The new Live Metrics grid on the Earn page is very intuitive." | `9da3246` |
+| Tushar | Ttussharrmishraa@gmail.com | GCQ5...L9 | "Finally, an app that treats student finance with real-world security." | `6b7ad7d` |
+| Aradhya ranjan | anchal230sinha@gmail.com | GDA1...P2 | "Exporting my rewards as a CSV helped me with my finance project." | `f45f76e` |
+| anagha | mogus.1605@gmail.com | GCL8...S3 | "Forum likes and awards make the community feel more interactive." | `f72855a` |
+| Gargi Gupta | gargipg01@gmail.com | GBT3...F1 | "Stellar testnet integration is rock solid. No transaction delays." | `0c6f748` |
+| Susan umakant | umakantsirtwi@gmail.com | GCV6...K0 | "The 'Hello, Guest' fallback is a small but great UI improvement." | `3b519ec` |
+| Alina | alinarajofficial@gmail.com | GDS9...M4 | "The horizontal category slider is a major win for one-handed use." | `9da3246` |
+| Devina Vinay | 24f2001022@ds.study.iitm.ac.in | GBA2...R5 | "The 'Privacy Mode' eye icon is a clever feature for campus use." | `6b7ad7d` |
 ![Live Metrics Dashboard tobe be added from form soon]
 *Live Metrics system showing real-time user activity and success rates.*
 
