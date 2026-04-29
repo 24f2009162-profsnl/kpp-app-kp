@@ -58,14 +58,28 @@ The MVP was tested with 30+ real testnet users. Their feedback was collected and
 | Susan umakant | umakantsirtwi@gmail.com | GCV6...K0 | "The 'Hello, Guest' fallback is a small but great UI improvement." | `3b519ec` |
 | Alina | alinarajofficial@gmail.com | GDS9...M4 | "The horizontal category slider is a major win for one-handed use." | `9da3246` |
 | Devina Vinay | 24f2001022@ds.study.iitm.ac.in | GBA2...R5 | "The 'Privacy Mode' eye icon is a clever feature for campus use." | `6b7ad7d` |
-![Live Metrics Dashboard tobe be added from form soon]
+
+### 📊 Live Metrics Dashboard
+![Live Metrics Dashboard](./assets/dashboard.png)
 *Live Metrics system showing real-time user activity and success rates.*
 
-![Neon Pink Theme]
-*The new Neon Pink light mode theme requested by users.*
+### 🎨 Neon Pink Theme
+![Neon Pink Theme](./assets/theme.png)
+*The new Neon Pink Light mode theme requested by users.*
 
-![Redemption Store]
+### 🛍️ Redemption Store
+![Redemption Store](./assets/store.png)
 *Redeem points for college essentials and canteen vouchers.*
+
+### 📱 Mobile Experience
+![Mobile UI](./assets/mobile.png)
+*Responsive mobile interface designed for on-the-go campus use.*
+
+### ⚙️ Technical Implementation & Proof
+| System Structure | Transaction Ledger |
+| :---: | :---: |
+| ![Structure](./assets/structure.png) | ![Transactions](./assets/transaction.png) |
+| *Project Directory Structure* | *On-chain Transaction Proof* |
 
 ### 🛠️ Iterations Based on Feedback online via diff state friends 
 - **Iteration 1**: Added persistent state via `localStorage`.
