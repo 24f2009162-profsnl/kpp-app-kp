@@ -132,7 +132,7 @@ export default function Forum() {
                       {post.awards?.map((award, i) => {
                         const awardInfo = AWARDS.find(a => a.label === award);
                         return (
-                          <span key={i} title={award} className={`px-1.5 py-0.5 rounded-lg ${awardInfo?.color || 'bg-slate-100'} text-[10px] font-bold flex items-center gap-1`}>
+                          <span key={`${award}-${i}`} title={award} className={`px-1.5 py-0.5 rounded-lg ${awardInfo?.color || 'bg-slate-100'} text-[10px] font-bold flex items-center gap-1`}>
                             {awardInfo?.icon}
                           </span>
                         );

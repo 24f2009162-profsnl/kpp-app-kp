@@ -143,6 +143,7 @@ This section outlines the production-readiness of KAiiTzn for the final Black Be
 Our journey to production-readiness and onboarding 30+ users was shared with the broader Web3 community on X (Twitter).
 
 [![KAiiTzn Community Post](./assets/twiiter.png)](https://x.com/verseshriyam)
+
 *Official announcement of KAiiTzn scaling to production-readiness on the Stellar Network.*
 
 ---

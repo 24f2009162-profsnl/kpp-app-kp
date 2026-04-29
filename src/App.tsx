@@ -12,7 +12,8 @@ import {
   LogOut,
   MessageSquare,
   Bell,
-  Lock
+  Lock,
+  Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -25,6 +26,7 @@ import TransactionHistory from './pages/History';
 import Profile from './pages/Profile';
 import Forum from './pages/Forum';
 import Leaderboard from './pages/Leaderboard';
+import Council from './pages/Council';
 
 // Store
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -33,8 +35,7 @@ import { signInWithGoogle } from './services/firebase';
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { state, login, logout, toggleDarkMode, markNotificationRead, unlockApp } = useStore();
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const { state, login, logout, toggleDarkMode, markNotificationRead, unlockApp, setShowLoginModal } = useStore();
   const [studentIdInput, setStudentIdInput] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
@@ -42,8 +43,24 @@ export default function App() {
   const [appLockError, setAppLockError] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [lastNotificationId, setLastNotificationId] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [currentToast, setCurrentToast] = useState<any>(null);
 
   const [isConfigLoading, setIsConfigLoading] = useState(true);
+
+  useEffect(() => {
+    if (state.notifications.length > 0) {
+      const latest = state.notifications[0];
+      if (latest.id !== lastNotificationId && !latest.read) {
+        setLastNotificationId(latest.id);
+        setCurrentToast(latest);
+        setShowToast(true);
+        const timer = setTimeout(() => setShowToast(false), 5000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [state.notifications, lastNotificationId]);
 
   useEffect(() => {
     // Simulate config check
@@ -122,6 +139,64 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        {/* Toast Notification */}
+        <AnimatePresence>
+          {showToast && currentToast && (
+            <motion.div 
+              initial={{ opacity: 0, y: -100, x: '-50%' }}
+              animate={{ opacity: 1, y: 20, x: '-50%' }}
+              exit={{ opacity: 0, y: -100, x: '-50%' }}
+              className="fixed top-0 left-1/2 z-[300] w-full max-w-md px-4"
+            >
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                  currentToast.type === 'success' ? 'bg-green-100 text-green-600' : 
+                  currentToast.type === 'warning' ? 'bg-amber-100 text-amber-600' : 
+                  'bg-indigo-100 text-indigo-600'
+                }`}>
+                  <Bell size={24} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-black text-slate-900 dark:text-white">{currentToast.title}</h4>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{currentToast.message}</p>
+                </div>
+                <button onClick={() => setShowToast(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Toast Notification */}
+        <AnimatePresence>
+          {showToast && currentToast && (
+            <motion.div 
+              initial={{ opacity: 0, y: -100, x: '-50%' }}
+              animate={{ opacity: 1, y: 20, x: '-50%' }}
+              exit={{ opacity: 0, y: -100, x: '-50%' }}
+              className="fixed top-0 left-1/2 z-[300] w-full max-w-md px-4"
+            >
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                  currentToast.type === 'success' ? 'bg-green-100 text-green-600' : 
+                  currentToast.type === 'warning' ? 'bg-amber-100 text-amber-600' : 
+                  'bg-indigo-100 text-indigo-600'
+                }`}>
+                  <Bell size={24} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-black text-slate-900 dark:text-white">{currentToast.title}</h4>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{currentToast.message}</p>
+                </div>
+                <button onClick={() => setShowToast(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <nav className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-20 items-center justify-between">
@@ -135,14 +210,23 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="hidden md:block">
-                <div className="flex items-center gap-8">
-                  <NavLink to="/">Dashboard</NavLink>
-                  <NavLink to="/earn">Earn</NavLink>
-                  <NavLink to="/pay">Pay</NavLink>
-                  <NavLink to="/forum">Forum</NavLink>
-                  <NavLink to="/leaderboard">Leaderboard</NavLink>
-                  <NavLink to="/history">History</NavLink>
+              <div className="hidden md:flex items-center gap-8">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Network: Stellar Testnet</span>
+                </div>
+
+                {state.studentId && (
+                    <>
+                      <NavLink to="/">Dashboard</NavLink>
+                      <NavLink to="/earn">Earn</NavLink>
+                      <NavLink to="/pay">Pay</NavLink>
+                      <NavLink to="/forum">Forum</NavLink>
+                      <NavLink to="/leaderboard">Leaderboard</NavLink>
+                      <NavLink to="/council">Council</NavLink>
+                      <NavLink to="/history">History</NavLink>
+                    </>
+                  )}
                   
                   {state.studentId ? (
                     <div className="flex items-center gap-6">
@@ -152,11 +236,11 @@ export default function App() {
                             e.stopPropagation();
                             setShowNotifications(!showNotifications);
                           }}
-                          className={`relative p-2 rounded-xl transition-all cursor-pointer select-none touch-manipulation ${showNotifications ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-400 hover:text-indigo-600'}`}
+                          className={`relative p-3 -m-1 rounded-xl transition-all cursor-pointer select-none touch-manipulation z-[60] ${showNotifications ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600' : 'text-slate-400 hover:text-indigo-600'}`}
                         >
-                          <Bell size={22} />
+                          <Bell size={24} />
                           {unreadCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-red-500 text-[10px] font-black text-white flex items-center justify-center border-2 border-white dark:border-slate-900">
+                            <span className="absolute top-2 right-2 h-4 w-4 rounded-full bg-red-500 text-[10px] font-black text-white flex items-center justify-center border-2 border-white dark:border-slate-900">
                               {unreadCount}
                             </span>
                           )}
@@ -174,11 +258,14 @@ export default function App() {
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Notifications</h3>
                                 <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-lg uppercase">{unreadCount} New</span>
                               </div>
-                              <div className="max-h-96 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
+                              <div className="max-h-96 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800 pointer-events-auto">
                                 {state.notifications.length > 0 ? state.notifications.map(n => (
                                   <div 
                                     key={n.id} 
-                                    onClick={() => markNotificationRead(n.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      markNotificationRead(n.id);
+                                    }}
                                     className={`p-6 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${!n.read ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}
                                   >
                                     <div className="flex gap-3">
@@ -210,13 +297,13 @@ export default function App() {
                         </AnimatePresence>
                       </div>
 
-                      <Link to="/profile" className="flex items-center gap-3 p-1.5 pr-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-indigo-200 transition-all group">
-                        <div className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-indigo-100 dark:shadow-none group-hover:scale-105 transition-transform">
-                          {state.studentId.slice(0, 2)}
+                      <Link to="/profile" className="flex items-center gap-3 p-1.5 pr-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 hover:border-emerald-300 transition-all group">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-emerald-100 dark:shadow-none group-hover:scale-105 transition-transform">
+                          SID
                         </div>
                         <div className="leading-tight">
-                          <p className="text-xs font-black text-slate-900 dark:text-white">{state.studentId}</p>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Student Profile</p>
+                          <p className="text-xs font-black text-emerald-900 dark:text-emerald-400">SID</p>
+                          <p className="text-[9px] font-black text-emerald-600/60 dark:text-emerald-500/60 uppercase tracking-widest">Student Profile</p>
                         </div>
                       </Link>
                     </div>
@@ -226,9 +313,8 @@ export default function App() {
                     </button>
                   )}
                 </div>
-              </div>
 
-              <div className="md:hidden flex items-center gap-4">
+                <div className="md:hidden flex items-center gap-4">
                 {state.studentId && (
                   <button 
                     onClick={(e) => {
@@ -252,13 +338,28 @@ export default function App() {
             {isMenuOpen && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 md:hidden overflow-hidden">
                 <div className="space-y-1 px-4 py-4">
-                  <MobileNavLink to="/" onClick={() => setIsMenuOpen(false)}>Dashboard</MobileNavLink>
-                  <MobileNavLink to="/earn" onClick={() => setIsMenuOpen(false)}>Earn</MobileNavLink>
-                  <MobileNavLink to="/pay" onClick={() => setIsMenuOpen(false)}>Pay</MobileNavLink>
-                  <MobileNavLink to="/forum" onClick={() => setIsMenuOpen(false)}>Forum</MobileNavLink>
-                  <MobileNavLink to="/leaderboard" onClick={() => setIsMenuOpen(false)}>Leaderboard</MobileNavLink>
-                  <MobileNavLink to="/history" onClick={() => setIsMenuOpen(false)}>History</MobileNavLink>
-                  <MobileNavLink to="/profile" onClick={() => setIsMenuOpen(false)}>Profile</MobileNavLink>
+                  {state.studentId ? (
+                    <>
+                      <MobileNavLink to="/" onClick={() => setIsMenuOpen(false)}>Dashboard</MobileNavLink>
+                      <MobileNavLink to="/earn" onClick={() => setIsMenuOpen(false)}>Earn</MobileNavLink>
+                      <MobileNavLink to="/pay" onClick={() => setIsMenuOpen(false)}>Pay</MobileNavLink>
+                      <MobileNavLink to="/forum" onClick={() => setIsMenuOpen(false)}>Forum</MobileNavLink>
+                      <MobileNavLink to="/leaderboard" onClick={() => setIsMenuOpen(false)}>Leaderboard</MobileNavLink>
+                      <MobileNavLink to="/council" onClick={() => setIsMenuOpen(false)}>Council Portal</MobileNavLink>
+                      <MobileNavLink to="/history" onClick={() => setIsMenuOpen(false)}>History</MobileNavLink>
+                      <MobileNavLink to="/profile" onClick={() => setIsMenuOpen(false)}>Profile</MobileNavLink>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setShowLoginModal(true);
+                      }}
+                      className="w-full mt-4 rounded-2xl bg-indigo-600 px-8 py-4 text-sm font-black text-white shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95"
+                    >
+                      Student Sign In
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -272,6 +373,7 @@ export default function App() {
             <Route path="/pay" element={state.studentId ? <Pay /> : <Navigate to="/" />} />
             <Route path="/forum" element={state.studentId ? <Forum /> : <Navigate to="/" />} />
             <Route path="/leaderboard" element={state.studentId ? <Leaderboard /> : <Navigate to="/" />} />
+            <Route path="/council" element={state.studentId ? <Council /> : <Navigate to="/" />} />
             <Route path="/history" element={state.studentId ? <TransactionHistory /> : <Navigate to="/" />} />
             <Route path="/profile" element={state.studentId ? <Profile /> : <Navigate to="/" />} />
           </Routes>
@@ -332,15 +434,22 @@ export default function App() {
         </AnimatePresence>
 
         <AnimatePresence>
-          {showLoginModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 p-8 shadow-2xl">
+          {state.showLoginModal && (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                exit={{ scale: 0.9, opacity: 0 }} 
+                className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 p-8 shadow-2xl relative"
+              >
+                <button 
+                  onClick={() => setShowLoginModal(false)}
+                  className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2"
+                >
+                  <X size={24} />
+                </button>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Student Sign In</h2>
-                  <button onClick={() => {
-                    setShowLoginModal(false);
-                    setLoginError(null);
-                  }} className="text-slate-400"><X size={24} /></button>
                 </div>
 
                 {loginError && (

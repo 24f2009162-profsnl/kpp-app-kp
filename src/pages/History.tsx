@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -7,77 +7,47 @@ import {
   Download,
   ExternalLink,
   Calendar,
-  Gift,
-  RefreshCw,
+  History,
   X,
   CheckCircle2,
   AlertCircle,
   Clock,
-  ChevronLeft,
-  ChevronRight
+  RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useStore, Transaction } from '../services/store';
+import { useStore } from '../services/store';
+import { StellarService } from '../services/stellar';
 
-export default function TransactionHistory() {
+export default function HistoryPage() {
   const { state } = useStore();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
-  const [typeFilter, setTypeFilter] = useState<string>('All');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [showFilters, setShowFilters] = useState(false);
+  const [liveHistory, setLiveHistory] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filteredTransactions = useMemo(() => {
-    return state.transactions.filter(tx => {
-      const matchesSearch = tx.target.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           (tx.hash && tx.hash.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesStatus = statusFilter === 'All' || tx.status === statusFilter;
-      const matchesType = typeFilter === 'All' || tx.type === typeFilter;
-      
-      let matchesDate = true;
-      if (dateRange.start) {
-        matchesDate = matchesDate && new Date(tx.date) >= new Date(dateRange.start);
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (state.walletAddress) {
+        setIsLoading(true);
+        const history = await StellarService.getHistory(state.walletAddress);
+        setLiveHistory(history);
+        setIsLoading(false);
       }
-      if (dateRange.end) {
-        matchesDate = matchesDate && new Date(tx.date) <= new Date(dateRange.end);
-      }
-
-      return matchesSearch && matchesStatus && matchesType && matchesDate;
-    });
-  }, [state.transactions, searchQuery, statusFilter, typeFilter, dateRange]);
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('All');
-    setTypeFilter('All');
-    setDateRange({ start: '', end: '' });
-  };
-
-  const getStatusStyles = (status: Transaction['status']) => {
-    switch (status) {
-      case 'Completed': return 'bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/30';
-      case 'Pending': return 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30';
-      case 'Rejected': return 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30';
-      case 'Revisions Needed': return 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-900/30';
-      default: return 'bg-slate-50 text-slate-600 border-slate-100';
-    }
-  };
+    };
+    fetchHistory();
+  }, [state.walletAddress]);
 
   const handleExport = () => {
-    if (filteredTransactions.length === 0) return;
+    if (liveHistory.length === 0) return;
 
-    const headers = ['ID', 'Type', 'Target', 'Amount', 'Date', 'Time', 'Status', 'Hash'];
+    const headers = ['ID', 'Hash', 'Date', 'Time', 'Memo', 'Status'];
     const csvContent = [
       headers.join(','),
-      ...filteredTransactions.map(tx => [
+      ...liveHistory.map(tx => [
         tx.id,
-        tx.type,
-        `"${tx.target}"`,
-        tx.amount,
+        tx.hash,
         tx.date,
         tx.time,
-        tx.status,
-        tx.hash || ''
+        `"${tx.memo}"`,
+        tx.successful ? 'Success' : 'Failed'
       ].join(','))
     ].join('\n');
 
@@ -93,184 +63,111 @@ export default function TransactionHistory() {
   };
 
   return (
-    <div className="space-y-8 pb-20 min-h-screen moon-arc-container p-8 rounded-[3rem] relative overflow-hidden">
+    <div className="space-y-12 pb-20 min-h-screen moon-arc-container p-8 rounded-[3rem] relative overflow-hidden">
       {/* Decorative Arcs */}
       <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[120%] aspect-square rounded-full border border-indigo-500/10 pointer-events-none" />
       <div className="absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[120%] aspect-square rounded-full border border-blue-500/10 pointer-events-none" />
 
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between relative z-10">
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tighter">ON-CHAIN LEDGER</h1>
-          <p className="text-slate-400 font-medium tracking-tight">Track your campus economy in real-time.</p>
-        </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={handleExport}
-            className="flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 px-6 py-4 text-sm font-black text-white hover:bg-white/10 transition-all active:scale-95"
-          >
-            <Download size={20} /> Export CSV
-          </button>
-        </div>
-      </header>
-
-      {/* Advanced Filters */}
-      <div className="space-y-4">
-        <div className="flex flex-col gap-4 md:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-            <input 
-              type="text" 
-              placeholder="Search by hash, target, or type..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-4 pl-12 pr-6 outline-none focus:border-indigo-500 transition-all font-medium dark:text-white shadow-sm"
-            />
-          </div>
-          <div className="flex gap-2">
+      <div className="space-y-4 relative z-10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-4xl font-black text-white tracking-tight">On-Chain Ledger</h1>
+          <div className="flex items-center gap-3">
+            <div className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live Network
+            </div>
             <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 rounded-2xl border px-6 py-3 text-sm font-black transition-all shadow-sm active:scale-95 ${showFilters ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'}`}
+              onClick={handleExport}
+              disabled={liveHistory.length === 0}
+              className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-slate-400 border border-slate-100 dark:border-slate-700 hover:text-indigo-600 transition-colors disabled:opacity-30"
             >
-              <Filter size={18} /> Filters
+              <Download size={20} />
             </button>
-            {(searchQuery || statusFilter !== 'All' || typeFilter !== 'All' || dateRange.start || dateRange.end) && (
-              <button 
-                onClick={clearFilters}
-                className="flex items-center gap-2 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 px-6 py-3 text-sm font-black text-red-600 dark:text-red-400 hover:bg-red-100 transition-all active:scale-95"
-              >
-                <X size={18} /> Clear
-              </button>
-            )}
           </div>
         </div>
-
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div 
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="grid gap-6 md:grid-cols-4 p-8 rounded-[2.5rem] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</label>
-                  <select 
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-3 px-4 outline-none focus:border-indigo-500 text-sm font-bold dark:text-white"
-                  >
-                    <option value="All">All Statuses</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="Revisions Needed">Revisions Needed</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</label>
-                  <select 
-                    value={typeFilter}
-                    onChange={(e) => setTypeFilter(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-3 px-4 outline-none focus:border-indigo-500 text-sm font-bold dark:text-white"
-                  >
-                    <option value="All">All Types</option>
-                    <option value="send">Send</option>
-                    <option value="receive">Receive</option>
-                    <option value="reward">Reward</option>
-                    <option value="convert">Convert</option>
-                    <option value="transfer">Transfer</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">From Date</label>
-                  <input 
-                    type="date" 
-                    value={dateRange.start}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-3 px-4 outline-none focus:border-indigo-500 text-sm font-bold dark:text-white"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">To Date</label>
-                  <input 
-                    type="date" 
-                    value={dateRange.end}
-                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-3 px-4 outline-none focus:border-indigo-500 text-sm font-bold dark:text-white"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <p className="text-slate-400 font-bold max-w-2xl leading-relaxed">
+          Immutable records fetched directly from the Stellar blockchain for account {state.walletAddress?.slice(0, 8)}...
+        </p>
       </div>
 
-      {/* Transactions Table */}
-      <div className="overflow-hidden rounded-[3rem] bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800">
+      <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 relative z-10">
+        <div className="flex items-center justify-between mb-10">
+          <h2 className="text-xl font-black text-slate-900 dark:text-white">Transaction Log</h2>
+          <div className="flex items-center gap-2 p-1 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+            {['All', 'Payments', 'Ledger'].map((tab) => (
+              <button key={tab} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                tab === 'All' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-700'
+              }`}>
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="min-w-full">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                <th className="px-8 py-6">Transaction</th>
-                <th className="px-8 py-6">Amount</th>
-                <th className="px-8 py-6">Date & Time</th>
-                <th className="px-8 py-6">Status</th>
-                <th className="px-8 py-6">Hash</th>
+              <tr className="border-b border-slate-50 dark:border-slate-800 text-left">
+                <th className="py-5 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Timestamp</th>
+                <th className="py-5 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Transaction Hash</th>
+                <th className="py-5 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
+                <th className="py-5 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pocket</th>
+                <th className="py-5 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-              {filteredTransactions.length > 0 ? filteredTransactions.map((tx) => (
-                <tr key={tx.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className={`rounded-2xl p-3 ${
-                        tx.type === 'send' ? 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400' : 
-                        tx.type === 'receive' ? 'bg-green-50 text-green-500 dark:bg-green-900/20 dark:text-green-400' : 
-                        tx.type === 'convert' ? 'bg-indigo-50 text-indigo-500 dark:bg-indigo-900/20 dark:text-indigo-400' :
-                        'bg-amber-50 text-amber-500 dark:bg-amber-900/20 dark:text-amber-400'
-                      }`}>
-                        {tx.type === 'send' ? <ArrowUpRight size={18} /> : 
-                         tx.type === 'convert' ? <RefreshCw size={18} /> :
-                         tx.type === 'reward' ? <Gift size={18} /> :
-                         <ArrowDownLeft size={18} />}
-                      </div>
-                      <div>
-                        <p className="text-base font-black text-slate-900 dark:text-white">{tx.target}</p>
-                        <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">{tx.type}</p>
-                      </div>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full" />
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">Loading Ledger...</p>
                     </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className={`text-base font-black ${
-                      tx.amount.startsWith('+') ? 'text-green-500' : 'text-slate-900 dark:text-white'
-                    }`}>
-                      {tx.amount}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{tx.date}</p>
-                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{tx.time}</p>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest border ${getStatusStyles(tx.status)}`}>
-                      {tx.status}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <button className="flex items-center gap-1 text-xs font-mono font-bold text-indigo-600 hover:underline">
-                      {tx.hash ? `${tx.hash.slice(0, 6)}...${tx.hash.slice(-4)}` : 'N/A'} <ExternalLink size={12} />
-                    </button>
                   </td>
                 </tr>
-              )) : (
+              ) : liveHistory.length > 0 ? (
+                liveHistory.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="py-6 px-4">
+                      <p className="text-sm font-black text-slate-900 dark:text-white">{tx.date}</p>
+                      <p className="text-[10px] font-bold text-slate-400">{tx.time}</p>
+                    </td>
+                    <td className="py-6 px-4">
+                      <div className="flex items-center gap-2">
+                        <code className="text-[10px] font-black text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-md">
+                          {tx.hash.slice(0, 12)}...
+                        </code>
+                        <a 
+                          href={`https://stellar.expert/explorer/testnet/tx/${tx.hash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-all"
+                        >
+                          <ExternalLink size={12} className="text-slate-400 hover:text-indigo-600" />
+                        </a>
+                      </div>
+                    </td>
+                    <td className="py-6 px-4">
+                      <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">{tx.memo}</p>
+                    </td>
+                    <td className="py-6 px-4">
+                      <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[9px] font-black uppercase text-slate-500 tracking-wider">
+                        Ledger
+                      </span>
+                    </td>
+                    <td className="py-6 px-4 text-right">
+                      <p className={`text-sm font-black ${tx.successful ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {tx.successful ? 'Success' : 'Failed'}
+                      </p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Confirmed</p>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
-                  <td colSpan={5} className="px-8 py-20 text-center">
-                    <div className="mx-auto h-16 w-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-300 mb-4">
-                      <Search size={32} />
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold">No transactions found matching your filters.</p>
-                    <button onClick={clearFilters} className="mt-2 text-indigo-600 font-black uppercase tracking-widest text-xs hover:underline">Clear all filters</button>
+                  <td colSpan={5} className="py-20 text-center opacity-50">
+                    <History size={48} className="mx-auto mb-4 stroke-[1.5] text-slate-300" />
+                    <p className="text-sm font-black uppercase tracking-widest text-slate-400">No ledger entries found</p>
                   </td>
                 </tr>
               )}

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStore, Gig } from '../services/store';
+import { StellarService, SERVICE_ADDRESSES } from '../services/stellar';
 
 export default function Earn() {
   const { state, addGig, applyToGig, completeTask, verifyTask, toggleReminder, addReferral, useReferralCode, redeemItem } = useStore();
@@ -38,6 +39,7 @@ export default function Earn() {
   const [selectedGig, setSelectedGig] = useState<Gig | null>(null);
   const [showApplyForm, setShowApplyForm] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [applyData, setApplyData] = useState({ what: '', how: '', proof: '' });
   const [taskProofLinks, setTaskProofLinks] = useState<Record<string, string>>({});
@@ -291,8 +293,8 @@ export default function Earn() {
                               value={taskProofLinks[task.id] || ''}
                               onChange={e => setTaskProofLinks(prev => ({ ...prev, [task.id]: e.target.value }))}
                               className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px] font-bold outline-none focus:border-indigo-500"
-                            />
-                            <button 
+                          
+                             <button 
                               onClick={() => completeTask(task.id, taskProofLinks[task.id])}
                               disabled={!taskProofLinks[task.id]}
                               className="rounded-xl bg-indigo-600 px-6 py-2.5 text-xs font-black text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -301,21 +303,29 @@ export default function Earn() {
                             </button>
                           </div>
                         )}
+                       </button>
 
                         {/* Admin Verification (Twisha Only) */}
                         {state.studentId === 'Twisha' && task.status === 'Pending' && task.proofLink && (
                           <div className="flex gap-2 mt-2">
                             <button 
-                              onClick={() => verifyTask(task.id, 'Completed')}
-                              className="px-4 py-2 rounded-xl bg-green-600 text-white text-[10px] font-black hover:bg-green-700 transition-all"
-                            >
-                              Approve
-                            </button>
-                            <button 
-                              onClick={() => verifyTask(task.id, 'Rejected')}
-                              className="px-4 py-2 rounded-xl bg-red-600 text-white text-[10px] font-black hover:bg-red-700 transition-all"
-                            >
-                              Reject
+                              onClick={async () => {
+                              try {
+                             const TREASURY_SECRET = "SBGKUC4WXHWGKDPOG6PYXWI7UBILQH3UM6ASHSWT7CTYGGSH4K6T3VU4"; 
+                             const gig = state.gigs.find(g => g.id === task.gigId);
+                             const amount = gig?.reward ? (gig.reward / 100).toString() : "1";
+    
+                            // Real Stellar Payment
+                             const result = await StellarService.payWithXLM(TREASURY_SECRET, state.walletAddress, amount);
+    
+                             if (result.successful) {
+                             verifyTask(task.id, 'Completed');
+                             alert(`Paid On-Chain! Hash: ${result.hash}`);
+                             }
+                             } catch (e) {
+                             alert("Transaction failed. Check Treasury balance.");
+                               }
+                               }}
                             </button>
                           </div>
                         )}
@@ -472,8 +482,32 @@ export default function Earn() {
                 </div>
                 <div className="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-slate-800">
                   <p className="text-lg font-black text-slate-900 dark:text-white">{item.price} KPP</p>
-                  <button 
-                    onClick={() => redeemItem(item.id)}
+                <button 
+                 onClick={async () => {
+                 try {
+                   // 1. Determine which merchant to pay based on item category
+                 const recipient = item.category === 'Food' 
+                 ? SERVICE_ADDRESSES.canteen 
+                 : SERVICE_ADDRESSES.books;
+
+                  // 2. Trigger real payment from Student to Merchant
+      
+                   const result = await StellarService.payWithXLM(
+                   userSecret, // Or use the Wallet Kit's sign transaction flow
+                   recipient, 
+                   (item.price / 100).toString() 
+                   );
+
+                  if (result.successful) {
+                  redeemItem(item.id); // Update local UI
+                  alert("Redemption Ledger Verified! Hash: " + result.hash);
+                  }
+                  } catch (e) {
+                   alert("Redemption failed. Check wallet connection.");
+                    }
+                    }}
+                    // ... rest of button props
+                    >
                     disabled={state.kppPoints < item.price}
                     className={`rounded-xl px-6 py-2.5 text-xs font-black transition-all ${
                       state.kppPoints >= item.price 
@@ -690,6 +724,31 @@ export default function Earn() {
                   Post Gig to Marketplace
                 </button>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }} 
+              className="w-full max-w-md rounded-[3rem] bg-white dark:bg-slate-900 p-10 shadow-2xl text-center space-y-6"
+            >
+              <div className="mx-auto h-24 w-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600">
+                <CheckCircle2 size={48} />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">Task Submitted!</h2>
+                <p className="text-slate-500 dark:text-slate-400 font-bold">Wait for 24 hrs to receive your prize. Our team will verify your submission shortly.</p>
+              </div>
+              <button 
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-black hover:bg-indigo-700 transition-all active:scale-95"
+              >
+                Got it!
+              </button>
             </motion.div>
           </div>
         )}

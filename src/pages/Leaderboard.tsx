@@ -109,8 +109,8 @@ export default function Leaderboard() {
               <div className="flex-1">
                 <h4 className="font-black text-slate-900 dark:text-white">{user.name}</h4>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {user.badges.map(badge => (
-                    <span key={badge} className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                  {user.badges.map((badge, i) => (
+                    <span key={`${badge}-${i}`} className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
                       {badge}
                     </span>
                   ))}
@@ -132,8 +132,8 @@ export default function Leaderboard() {
             <div className="flex-1">
               <h4 className="font-black text-slate-900 dark:text-white">{currentUserRank.name} (You)</h4>
               <div className="flex flex-wrap gap-2 mt-1">
-                {currentUserRank.badges.map(badge => (
-                  <span key={badge} className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50">
+                {currentUserRank.badges.map((badge, i) => (
+                  <span key={`${badge}-${i}`} className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50">
                     {badge}
                   </span>
                 ))}

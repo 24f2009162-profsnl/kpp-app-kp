@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { firebaseLogout } from './firebase';
+import { StellarService } from './stellar';
 
 export interface Transaction {
   id: string;
@@ -113,6 +114,21 @@ export interface AppState {
   reminders: string[];
   pastUsernames: string[];
   redeemableItems: RedeemableItem[];
+  showLoginModal: boolean;
+  pendingApprovals: PendingApproval[];
+  councilRole: 'user' | 'secretary' | 'treasurer';
+}
+
+export interface PendingApproval {
+  id: string;
+  amount: number;
+  target: string;
+  pocketId: string;
+  date: string;
+  approvals: {
+    secretary: boolean;
+    treasurer: boolean;
+  };
 }
 
 export interface RedeemableItem {
@@ -127,7 +143,7 @@ export interface RedeemableItem {
 const INITIAL_STATE: AppState = {
   studentId: null,
   walletAddress: null,
-  xlm: '125.50',
+  xlm: '0.00',
   points: '450',
   kppPoints: 450,
   kppTokens: '0',
@@ -197,6 +213,9 @@ const INITIAL_STATE: AppState = {
     { id: 'r4', name: 'Gym Membership (1 Month)', description: 'One month free access to the campus gym.', price: 3000, category: 'Other' },
     { id: 'r5', name: 'Printing Credits (100 Pages)', description: 'Get 100 pages of free printing at the library.', price: 400, category: 'College' },
   ],
+  showLoginModal: false,
+  pendingApprovals: [],
+  councilRole: 'user',
 };
 
 export interface StoreContextType {
@@ -206,7 +225,7 @@ export interface StoreContextType {
   connectWallet: (address: string) => void;
   disconnectWallet: () => void;
   updateBalance: (xlmDiff: number, pointsDiff: number, tokenDiff?: number, pocketId?: string) => void;
-  addTransaction: (tx: Omit<Transaction, 'id' | 'date' | 'time' | 'status' | 'hash'>) => void;
+  addTransaction: (tx: Omit<Transaction, 'id' | 'date' | 'time' | 'status'>) => void;
   addGig: (gig: Omit<Gig, 'id' | 'status'>) => void;
   applyToGig: (gigId: string) => void;
   completeTask: (taskId: string, proofLink: string) => void;
@@ -235,6 +254,11 @@ export interface StoreContextType {
   setAppLock: (password: string) => void;
   unlockApp: (password: string) => boolean;
   disableAppLock: () => void;
+  setShowLoginModal: (show: boolean) => void;
+  setWalletAddress: (address: string) => void;
+  addPendingApproval: (approval: Omit<PendingApproval, 'id' | 'approvals'>) => void;
+  approveTransaction: (id: string, role: 'secretary' | 'treasurer') => void;
+  setCouncilRole: (role: 'user' | 'secretary' | 'treasurer') => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -258,6 +282,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem('kpp_state', JSON.stringify(state));
   }, [state]);
+
+  // Fetch real XLM balance when wallet is connected
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (state.walletAddress) {
+        const balances = await StellarService.getBalance(state.walletAddress);
+        setState(s => ({
+          ...s,
+          xlm: balances.xlm,
+          // points and tokens are currently mock or locally managed
+        }));
+      }
+    };
+
+    fetchBalance();
+    // Poll every 30 seconds for balance updates
+    const interval = setInterval(fetchBalance, 30000);
+    return () => clearInterval(interval);
+  }, [state.walletAddress]);
 
   const login = useCallback((id: string) => setState(s => {
     const isNew = s.studentId !== id;
@@ -829,6 +872,64 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, [addNotification]);
 
+  const setShowLoginModal = useCallback((show: boolean) => setState(s => ({ ...s, showLoginModal: show })), []);
+
+  const setWalletAddress = useCallback((address: string) => {
+    setState(s => ({ ...s, walletAddress: address }));
+    addNotification({
+      title: 'Wallet Connected',
+      message: `Manually connected to ${address.slice(0, 8)}...`,
+      type: 'success'
+    });
+  }, [addNotification]);
+
+  const addPendingApproval = useCallback((approval: Omit<PendingApproval, 'id' | 'approvals'>) => {
+    const newApproval: PendingApproval = {
+      ...approval,
+      id: Math.random().toString(36).substr(2, 9),
+      approvals: { secretary: false, treasurer: false }
+    };
+    setState(s => ({ ...s, pendingApprovals: [...s.pendingApprovals, newApproval] }));
+  }, []);
+
+  const approveTransaction = useCallback((id: string, role: 'secretary' | 'treasurer') => {
+    setState(s => {
+      const updatedApprovals = s.pendingApprovals.map(a => {
+        if (a.id === id) {
+          const newApprovals = { ...a.approvals, [role]: true };
+          // If both approved, complete the transaction
+          if (newApprovals.secretary && newApprovals.treasurer) {
+            // This would normally trigger the actual updateBalance
+            // For now, we'll just mark it as ready to be processed or auto-complete
+            setTimeout(() => {
+              updateBalance(-a.amount, 0, 0, a.pocketId);
+              addTransaction({
+                type: 'send',
+                target: a.target,
+                amount: `-${a.amount.toFixed(2)} XLM`,
+                pocket: s.pockets.find(p => p.id === a.pocketId)?.name || 'Fun'
+              });
+              addNotification({
+                title: 'Transaction Approved',
+                message: `Multi-sig transaction of ${a.amount} XLM to ${a.target} has been completed.`,
+                type: 'success'
+              });
+            }, 0);
+            return null; // Remove from pending
+          }
+          return { ...a, approvals: newApprovals };
+        }
+        return a;
+      }).filter(Boolean) as PendingApproval[];
+      
+      return { ...s, pendingApprovals: updatedApprovals };
+    });
+  }, [addNotification, updateBalance, addTransaction]);
+
+  const setCouncilRole = useCallback((role: 'user' | 'secretary' | 'treasurer') => {
+    setState(s => ({ ...s, councilRole: role }));
+  }, []);
+
   const value = {
     state,
     login,
@@ -864,7 +965,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     disable2FA,
     setAppLock,
     unlockApp,
-    disableAppLock
+    disableAppLock,
+    setShowLoginModal,
+    setWalletAddress,
+    addPendingApproval,
+    approveTransaction,
+    setCouncilRole
   };
 
   return (

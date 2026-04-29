@@ -11,18 +11,22 @@ import {
   CheckCircle2,
   X,
   Users,
-  ArrowLeft
+  ArrowLeft,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStore } from '../services/store';
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { StellarService, server, SERVICE_ADDRESSES } from '../services/stellar';
+import { StellarWalletsKit } from '../services/wallet';
+import { TransactionBuilder, Networks } from 'stellar-sdk';
 
 const SERVICES = [
-  { id: 'canteen', name: 'Canteen Order', icon: <Coffee size={24} />, color: 'bg-orange-50 text-orange-600', desc: 'Pre-book meals at Himalaya', cost: 12.50 },
-  { id: 'bike', name: 'Bicycle Sharing', icon: <Bike size={24} />, color: 'bg-blue-50 text-blue-600', desc: 'Unlock campus cycles', cost: 2.00 },
-  { id: 'power', name: 'Power Bank', icon: <Battery size={24} />, color: 'bg-green-50 text-green-600', desc: 'Rent power banks', cost: 5.00 },
-  { id: 'books', name: 'Book Sharing', icon: <BookOpen size={24} />, color: 'bg-purple-50 text-purple-600', desc: 'Borrow notes and books', cost: 1.00 },
+  { id: 'canteen', name: 'Canteen Order', icon: <Coffee size={24} />, color: 'bg-orange-50 text-orange-600', desc: 'Pre-book meals at Himalaya', cost: 12.50, address: SERVICE_ADDRESSES.canteen },
+  { id: 'bike', name: 'Bicycle Sharing', icon: <Bike size={24} />, color: 'bg-blue-50 text-blue-600', desc: 'Unlock campus cycles', cost: 2.00, address: SERVICE_ADDRESSES.bike },
+  { id: 'power', name: 'Power Bank', icon: <Battery size={24} />, color: 'bg-green-50 text-green-600', desc: 'Rent power banks', cost: 5.00, address: SERVICE_ADDRESSES.power },
+  { id: 'books', name: 'Book Sharing', icon: <BookOpen size={24} />, color: 'bg-purple-50 text-purple-600', desc: 'Borrow notes and books', cost: 1.00, address: SERVICE_ADDRESSES.books },
 ];
 
 export default function Pay() {
@@ -35,6 +39,7 @@ export default function Pay() {
   const [showQR, setShowQR] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [splitData, setSplitData] = useState({ amount: '', friends: '2' });
+  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (showScanModal && isScanning) {
@@ -73,10 +78,27 @@ export default function Pay() {
     }
   }, [showScanModal, isScanning]);
 
-  const handlePay = () => {
-    if (selectedService) {
+  const handlePay = async () => {
+    if (selectedService && state.walletAddress) {
       setIsProcessing(true);
-      setTimeout(() => {
+      try {
+        // 1. Build the transaction
+        const tx = await StellarService.buildPaymentTransaction(
+          state.walletAddress,
+          selectedService.address || 'GDEST...RECIPIENT',
+          selectedService.cost.toFixed(7) // Stellar requires up to 7 decimal precision
+        );
+
+        // 2. Sign the transaction using Wallet Kit
+        const { signedTxXdr } = await StellarWalletsKit.signTransaction(tx.toXDR());
+
+        // 3. Submit to Stellar network
+        const signedTxObj = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
+        const result = await server.submitTransaction(signedTxObj);
+        console.log('Transaction Successful:', result);
+        setLastTxHash(result.hash);
+
+        // 4. Update local state
         const pocketId = selectedService.id === 'canteen' ? 'food' : 'fun';
         updateBalance(-selectedService.cost, 0, 0, pocketId);
         addTransaction({ 
@@ -85,10 +107,21 @@ export default function Pay() {
           amount: `-${selectedService.cost.toFixed(2)} XLM`, 
           pocket: pocketId === 'food' ? 'Food' : 'Fun' 
         });
+        
         setIsProcessing(false);
         setIsSuccess(true);
-        setTimeout(() => { setIsSuccess(false); setSelectedService(null); }, 2000);
-      }, 1500);
+        setTimeout(() => { 
+          setIsSuccess(false); 
+          setSelectedService(null); 
+          setLastTxHash(null);
+        }, 8000);
+      } catch (e: any) {
+        console.error("Payment failed", e);
+        setIsProcessing(false);
+        alert(`Payment Failed: ${e.message || 'Unknown error'}. Make sure your account is funded on Testnet.`);
+      }
+    } else {
+      alert("Please connect your wallet first.");
     }
   };
 
@@ -144,9 +177,36 @@ export default function Pay() {
                 <button onClick={() => setSelectedService(null)} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
               </div>
               {isSuccess ? (
-                <div className="py-12 text-center space-y-4">
-                  <div className="mx-auto h-24 w-24 rounded-full bg-green-100 flex items-center justify-center text-green-600 shadow-inner"><CheckCircle2 size={56} /></div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">Payment Successful!</h3>
+                <div className="py-12 text-center space-y-6">
+                  <div className="mx-auto h-24 w-24 rounded-full bg-green-100 flex items-center justify-center text-green-600 shadow-inner">
+                    <CheckCircle2 size={56} />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">Payment Successful!</h3>
+                    <p className="text-sm font-bold text-slate-500">Confirmed on Stellar Ledger</p>
+                  </div>
+                  
+                  {lastTxHash && (
+                    <a 
+                      href={`https://stellar.expert/explorer/testnet/tx/${lastTxHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-2 text-indigo-600 font-black text-xs hover:underline pt-2"
+                    >
+                      View Receipt on Explorer <ExternalLink size={14} />
+                    </a>
+                  )}
+
+                  <button 
+                    onClick={() => {
+                      setIsSuccess(false);
+                      setSelectedService(null);
+                      setLastTxHash(null);
+                    }}
+                    className="w-full rounded-2xl bg-indigo-600 py-4 font-black text-white hover:bg-indigo-700 transition-all active:scale-95 mt-4"
+                  >
+                    Done
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-8">

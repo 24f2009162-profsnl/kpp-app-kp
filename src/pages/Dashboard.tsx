@@ -22,10 +22,15 @@ import {
   Eye,
   EyeOff,
   LayoutDashboard,
-  ExternalLink
+  ExternalLink,
+  History as HistoryIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { useStore } from '../services/store';
+import { connectStellarWallet, StellarWalletsKit } from '../services/wallet';
+import { StellarService, server } from '../services/stellar';
+import { TransactionBuilder, Networks } from 'stellar-sdk';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -42,13 +47,18 @@ export default function Dashboard() {
     checkDailyLogin,
     addSavingGoal,
     addNotification,
-    fundSavingGoal
+    fundSavingGoal,
+    setWalletAddress,
+    addPendingApproval
   } = useStore();
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [showWalletOptions, setShowWalletOptions] = useState(false);
+  const [showManualWalletModal, setShowManualWalletModal] = useState(false);
+  const [manualAddress, setManualAddress] = useState('');
+  const [manualAddressError, setManualAddressError] = useState('');
   const [showAddGoalModal, setShowAddGoalModal] = useState(false);
   const [showFundGoalModal, setShowFundGoalModal] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
@@ -56,6 +66,9 @@ export default function Dashboard() {
   const [isConverting, setIsConverting] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+  const [liveHistory, setLiveHistory] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   
   const [transferData, setTransferData] = useState({ from: 'fees', to: 'savings', amount: '' });
   const [sendData, setSendData] = useState({ address: '', amount: '', pocketId: 'fun' });
@@ -65,6 +78,20 @@ export default function Dashboard() {
   React.useEffect(() => {
     checkDailyLogin();
   }, [checkDailyLogin]);
+
+  React.useEffect(() => {
+    const fetchHistory = async () => {
+      if (state.walletAddress) {
+        setIsLoadingHistory(true);
+        const history = await StellarService.getHistory(state.walletAddress);
+        setLiveHistory(history);
+        setIsLoadingHistory(false);
+      }
+    };
+    fetchHistory();
+    const interval = setInterval(fetchHistory, 60000); 
+    return () => clearInterval(interval);
+  }, [state.walletAddress]);
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -85,41 +112,43 @@ export default function Dashboard() {
     }
   }, [showTransferModal, state.pockets]);
 
-  const handleConnect = async (type: 'stellar' | 'freighter' | 'albedo') => {
+  const handleConnect = async (type: 'stellar' | 'freighter' | 'albedo' | 'manual') => {
     try {
-      if (type === 'freighter') {
-        // @ts-ignore
-        if (window.freighterApi) {
-          // @ts-ignore
-          const { address } = await window.freighterApi.getPublicKey();
-          if (address) {
-            connectWallet(address);
-            addNotification({ title: 'Wallet Connected', message: `Freighter wallet connected: ${address.slice(0, 8)}...`, type: 'success' });
-          }
-        } else {
-          addNotification({ title: 'Freighter Not Found', message: 'Please install the Freighter extension.', type: 'warning' });
-        }
-      } else if (type === 'albedo') {
-        // @ts-ignore
-        if (window.albedo) {
-          // @ts-ignore
-          const res = await window.albedo.publicKey({});
-          if (res.pubkey) {
-            connectWallet(res.pubkey);
-            addNotification({ title: 'Wallet Connected', message: `Albedo wallet connected: ${res.pubkey.slice(0, 8)}...`, type: 'success' });
-          }
-        } else {
-          addNotification({ title: 'Albedo Not Found', message: 'Please install the Albedo extension or use the web version.', type: 'warning' });
-        }
-      } else {
-        // Mock for generic Stellar wallet if no extension
-        const mockAddress = `G${type.toUpperCase().slice(0, 1)}7...MOCK${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-        connectWallet(mockAddress);
+      if (type === 'manual') {
+        setShowWalletOptions(false);
+        setShowManualWalletModal(true);
+        return;
       }
-      setShowWalletOptions(false);
+
+      // Use the unified StellarWalletsKit for all real wallet types
+      const address = await connectStellarWallet();
+      if (address) {
+        connectWallet(address);
+        addNotification({ 
+          title: 'Wallet Connected', 
+          message: `Connected to ${address.slice(0, 8)}...`, 
+          type: 'success' 
+        });
+        setShowWalletOptions(false);
+      }
     } catch (err) {
       console.error('Connection error:', err);
-      addNotification({ title: 'Connection Failed', message: 'Could not connect to the wallet.', type: 'warning' });
+      // Don't show error if user just closed the modal
+      if (err !== 'MODAL_CLOSED') {
+        addNotification({ title: 'Connection Failed', message: 'Could not connect to the wallet.', type: 'warning' });
+      }
+    }
+  };
+
+  const handleManualConnect = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (manualAddress.trim().startsWith('G') && manualAddress.trim().length >= 56) {
+      setWalletAddress(manualAddress.trim());
+      setShowManualWalletModal(false);
+      setManualAddress('');
+      setManualAddressError('');
+    } else {
+      setManualAddressError('Invalid Stellar address. Must start with G and be 56 characters.');
     }
   };
 
@@ -171,20 +200,34 @@ export default function Dashboard() {
     }
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseFloat(sendData.amount);
     const currentXlm = parseFloat(state.xlm.toString().replace(/,/g, ''));
+    
     if (amount > 0 && amount <= currentXlm) {
+      if (!state.walletAddress) {
+        addNotification({ title: 'Wallet Required', message: 'Please connect your wallet to send XLM.', type: 'warning' });
+        return;
+      }
+
       setIsSending(true);
-      setTimeout(() => {
+      try {
         const pocketName = state.pockets.find(p => p.id === sendData.pocketId)?.name || 'Fun';
         
         if (amount > 500) {
+          // Multi-sig simulation or actual multi-sig logic can go here
+          // For now we keep the multi-sig approval flow logic as it was but with a real build attempt
+          addPendingApproval({
+            amount,
+            target: `Wallet: ${sendData.address.slice(0, 8)}...`,
+            pocketId: sendData.pocketId,
+            date: new Date().toLocaleDateString()
+          });
           addNotification({
             title: 'Approval Required',
             message: `Transaction of ${amount} XLM requires multi-sig approval from Council Secretary and Treasurer.`,
-            type: 'alert'
+            type: 'warning'
           });
           setIsSending(false);
           setShowSendModal(false);
@@ -192,21 +235,53 @@ export default function Dashboard() {
           return;
         }
 
+        // 1. Build Transaction
+        const tx = await StellarService.buildPaymentTransaction(
+          state.walletAddress,
+          sendData.address,
+          amount.toFixed(7)
+        );
+
+        // 2. Sign with Wallet Kit
+        const { signedTxXdr } = await StellarWalletsKit.signTransaction(tx.toXDR());
+
+        // 3. Submit
+        const signedTxObj = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
+        const result = await server.submitTransaction(signedTxObj);
+        console.log('Send Success:', result);
+
         updateBalance(-amount, 0, 0, sendData.pocketId);
         addTransaction({
           type: 'send',
           target: `Wallet: ${sendData.address.slice(0, 8)}...`,
           amount: `-${amount.toFixed(2)} XLM`,
-          pocket: pocketName
+          pocket: pocketName,
+          hash: result.hash
         });
+        
         setIsSending(false);
         setIsSuccess(true);
+        setLastTxHash(result.hash);
+        
+        // Refresh history immediately
+        const history = await StellarService.getHistory(state.walletAddress);
+        setLiveHistory(history);
+
         setTimeout(() => {
           setIsSuccess(false);
           setShowSendModal(false);
+          setLastTxHash(null);
           setSendData({ address: '', amount: '', pocketId: 'fun' });
-        }, 3000);
-      }, 1500);
+        }, 8000);
+      } catch (err: any) {
+        console.error('Send failed', err);
+        setIsSending(false);
+        addNotification({ 
+          title: 'Transaction Failed', 
+          message: err.message || 'Validation error or network issues.', 
+          type: 'warning' 
+        });
+      }
     }
   };
 
@@ -541,6 +616,86 @@ export default function Dashboard() {
           ))}
         </div>
       </section>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* On-Chain Activity */}
+        <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <HistoryIcon size={20} className="text-indigo-600" /> On-Chain Activity
+            </h2>
+            <Link to="/history" className="text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline">View Ledger</Link>
+          </div>
+          
+          <div className="space-y-4">
+            {isLoadingHistory ? (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-4">
+                <div className="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full" />
+                <p className="font-bold text-sm tracking-widest uppercase">Fetching Ledger...</p>
+              </div>
+            ) : liveHistory.length > 0 ? (
+              liveHistory.slice(0, 5).map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 group hover:bg-white dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
+                      <HistoryIcon size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        {tx.memo}
+                        <a 
+                          href={`https://stellar.expert/explorer/testnet/tx/${tx.hash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
+                        >
+                          <ExternalLink size={12} className="text-slate-400" />
+                        </a>
+                      </h4>
+                      <p className="text-[10px] font-bold text-slate-400">{tx.date} at {tx.time}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-slate-900 dark:text-white">
+                      {tx.hash.slice(0, 4)}...{tx.hash.slice(-4)}
+                    </p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Confirmed</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 opacity-50">
+                <HistoryIcon size={48} className="mb-4 stroke-[1.5]" />
+                <p className="font-bold text-sm tracking-widest uppercase">No ledger history found</p>
+                <p className="text-[10px] font-medium text-center">Your transactions will appear here once confirmed.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Support Section */}
+        <section className="bg-gradient-to-br from-indigo-900 to-indigo-950 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-xl">
+           <div className="relative z-10 space-y-6">
+              <h2 className="text-xl font-black italic">"The best way to predict the future is to create it."</h2>
+              <div className="space-y-4">
+                <p className="text-sm text-indigo-200 leading-relaxed font-medium">
+                  Kaiitzn Pocket Pay is bridging the gap between student life and digital assets on Stellar.
+                </p>
+                <div className="flex gap-4">
+                  <div className="flex-1 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-1">Asset Security</p>
+                    <p className="text-sm font-bold">Immutable Ledger</p>
+                  </div>
+                  <div className="flex-1 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-1">Network Fees</p>
+                    <p className="text-sm font-bold">~0.00001 XLM</p>
+                  </div>
+                </div>
+              </div>
+           </div>
+           <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+        </section>
+      </div>
 
       {/* Transfer & Allocation Modal */}
       <AnimatePresence>
@@ -727,47 +882,96 @@ export default function Dashboard() {
               
               <div className="space-y-4">
                 <button 
+                  onClick={() => handleConnect('manual')}
+                  className="w-full flex items-center gap-4 p-6 rounded-3xl bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all group"
+                >
+                  <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white">
+                    <Copy size={24} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-black text-slate-900 dark:text-white">Manual Entry</p>
+                    <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">No Extension Required</p>
+                  </div>
+                  <ChevronRight size={20} className="ml-auto text-indigo-400 group-hover:text-indigo-600 transition-colors" />
+                </button>
+
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-100 dark:border-slate-800"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white dark:bg-slate-900 px-4 font-black text-slate-400 tracking-widest">Or Real Wallet</span>
+                  </div>
+                </div>
+
+                <button 
                   onClick={() => handleConnect('stellar')}
-                  className="w-full flex items-center gap-4 p-6 rounded-3xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group"
+                  className="w-full flex items-center gap-4 p-6 rounded-3xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group border border-slate-100 dark:border-slate-700"
                 >
                   <div className="h-12 w-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
                     <Wallet size={24} />
                   </div>
                   <div className="text-left">
-                    <p className="font-black text-slate-900 dark:text-white">Stellar Wallet</p>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Standard Connection</p>
+                    <p className="font-black text-slate-900 dark:text-white">Stellar Wallets Kit</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lobstr • Freighter • Albedo • xBull</p>
                   </div>
                   <ChevronRight size={20} className="ml-auto text-slate-300 group-hover:text-indigo-600 transition-colors" />
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
-                <button 
-                  onClick={() => handleConnect('freighter')}
-                  className="w-full flex items-center gap-4 p-6 rounded-3xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group"
-                >
-                  <div className="h-12 w-12 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
-                    <Zap size={24} />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-black text-slate-900 dark:text-white">Freighter Wallet</p>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chrome Extension</p>
-                  </div>
-                  <ChevronRight size={20} className="ml-auto text-slate-300 group-hover:text-blue-600 transition-colors" />
-                </button>
-
-                <button 
-                  onClick={() => handleConnect('albedo')}
-                  className="w-full flex items-center gap-4 p-6 rounded-3xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all group"
-                >
-                  <div className="h-12 w-12 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
-                    <RefreshCw size={24} />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-black text-slate-900 dark:text-white">Albedo Wallet</p>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Browser Wallet</p>
-                  </div>
-                  <ChevronRight size={20} className="ml-auto text-slate-300 group-hover:text-purple-600 transition-colors" />
+      {/* Manual Wallet Modal */}
+      <AnimatePresence>
+        {showManualWalletModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md rounded-[3rem] bg-white dark:bg-slate-900 p-8 shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">Manual Wallet Entry</h2>
+                <button onClick={() => setShowManualWalletModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={24} />
                 </button>
               </div>
+
+              <form onSubmit={handleManualConnect} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Stellar Public Key</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={manualAddress}
+                    onChange={e => {
+                      setManualAddress(e.target.value);
+                      if (manualAddressError) setManualAddressError('');
+                    }}
+                    placeholder="G..."
+                    className={`w-full rounded-2xl bg-slate-50 dark:bg-slate-800 p-4 font-bold outline-none border ${manualAddressError ? 'border-red-500' : 'border-slate-100 dark:border-slate-700'} dark:text-white`}
+                  />
+                  {manualAddressError && (
+                    <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{manualAddressError}</p>
+                  )}
+                </div>
+
+                <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
+                  <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 leading-relaxed">
+                    Enter your Stellar public key (starting with 'G'). This will allow you to simulate transactions and view your balance.
+                  </p>
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full rounded-2xl bg-indigo-600 py-5 font-black text-white shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all"
+                >
+                  Connect Wallet
+                </button>
+              </form>
             </motion.div>
           </div>
         )}
@@ -910,21 +1114,35 @@ export default function Dashboard() {
 
               {isSuccess ? (
                 <div className="py-12 text-center space-y-6">
-                  <div className="mx-auto h-24 w-24 rounded-full bg-green-100 flex items-center justify-center text-green-600 shadow-inner">
+                  <div className="mx-auto h-24 w-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 shadow-inner">
                     <CheckCircle2 size={56} />
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-2xl font-black text-slate-900 dark:text-white">Sent Successfully!</h3>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">Your transaction has been processed.</p>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">Your transaction is now on the Stellar ledger.</p>
                   </div>
-                  <a 
-                    href="https://stellar.expert/explorer/public" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-indigo-600 font-black text-sm hover:underline"
+                  
+                  {lastTxHash && (
+                    <a 
+                      href={`https://stellar.expert/explorer/testnet/tx/${lastTxHash}`}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-indigo-600 font-black text-sm hover:underline"
+                    >
+                      View Receipt on Explorer <ExternalLink size={16} />
+                    </a>
+                  )}
+
+                  <button 
+                    onClick={() => {
+                      setIsSuccess(false);
+                      setShowSendModal(false);
+                      setLastTxHash(null);
+                    }}
+                    className="w-full rounded-2xl bg-indigo-600 py-4 font-black text-white hover:bg-indigo-700 transition-all active:scale-95"
                   >
-                    View on Stellar Expert <ExternalLink size={16} />
-                  </a>
+                    Done
+                  </button>
                 </div>
               ) : (
                 <form onSubmit={handleSend} className="space-y-6">

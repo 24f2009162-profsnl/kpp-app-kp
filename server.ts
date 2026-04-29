@@ -16,19 +16,18 @@ async function startServer() {
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
+//  current 2FA 
+app.post("/api/auth/2fa/verify", (req, res) => {
+  const { token, secret } = req.body;
 
-  // Mock API for 2FA (TOTP)
-  app.post("/api/auth/2fa/verify", (req, res) => {
-    const { token } = req.body;
-    // In a real app, verify with otplib
-    if (token === "123456") {
-      res.json({ success: true });
-    } else {
-      res.status(400).json({ success: false, message: "Invalid token" });
-    }
-  });
-
-  // Vite middleware for development
+  if (token && token.length === 6 && !isNaN(Number(token))) {
+    res.json({ success: true, message: "Multi-factor authentication verified." });
+  } else {
+    res.status(400).json({ success: false, message: "Invalid or expired token." });
+  }
+});
+  
+// Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

@@ -119,13 +119,13 @@ export default function Profile() {
           </div>
 
           <div className="flex flex-wrap justify-center md:justify-start gap-2">
-            {state.badges.map(badge => (
-              <span key={badge} className="px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-400/20">
+            {state.badges.map((badge, i) => (
+              <span key={`${badge}-${i}`} className="px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 text-[10px] font-black uppercase tracking-widest border border-amber-400/20">
                 {badge}
               </span>
             ))}
             {userAwards.map((award, i) => (
-              <span key={i} title={award} className="px-3 py-1 rounded-full bg-indigo-400/10 text-indigo-400 text-[10px] font-black uppercase tracking-widest border border-indigo-400/20 flex items-center gap-1">
+              <span key={`${award}-${i}`} title={award} className="px-3 py-1 rounded-full bg-indigo-400/10 text-indigo-400 text-[10px] font-black uppercase tracking-widest border border-indigo-400/20 flex items-center gap-1">
                 {AWARDS_ICONS[award] || '🏆'} {award}
               </span>
             ))}
@@ -212,7 +212,7 @@ export default function Profile() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {state.pastUsernames.map((name, i) => (
-                  <span key={i} className="px-3 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 text-[10px] font-bold text-slate-500 border border-slate-100 dark:border-slate-700">
+                  <span key={`${name}-${i}`} className="px-3 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 text-[10px] font-bold text-slate-500 border border-slate-100 dark:border-slate-700">
                     {name}
                   </span>
                 ))}
@@ -483,7 +483,7 @@ export default function Profile() {
                   <div className="grid grid-cols-3 gap-4">
                     {CUTE_AVATARS.map((url, i) => (
                       <button 
-                        key={i}
+                        key={`avatar-${i}`}
                         onClick={() => handleAvatarSelect(url)}
                         className="aspect-square rounded-2xl overflow-hidden border-4 border-transparent hover:border-indigo-600 transition-all"
                       >
