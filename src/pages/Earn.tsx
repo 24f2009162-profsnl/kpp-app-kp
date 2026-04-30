@@ -323,8 +323,13 @@ export default function Earn() {
                              }
                              } catch (e) {
                              alert("Transaction failed. Check Treasury balance.");
+                               }finally {
+                                setIsProcessing(false);
                                }
                                }}
+                             className="px-4 py-2 rounded-xl bg-green-600 text-white text-[10px] font-black hover:bg-green-700 transition-all disabled:opacity-50"
+                                 >
+                               {isProcessing ? 'Verifying...' : 'Approve & Pay On-Chain'}
                             </button>
                           </div>
                         )}
