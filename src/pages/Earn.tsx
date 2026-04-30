@@ -293,7 +293,7 @@ export default function Earn() {
                               value={taskProofLinks[task.id] || ''}
                               onChange={e => setTaskProofLinks(prev => ({ ...prev, [task.id]: e.target.value }))}
                               className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-[10px] font-bold outline-none focus:border-indigo-500"
-                          
+                              />
                              <button 
                               onClick={() => completeTask(task.id, taskProofLinks[task.id])}
                               disabled={!taskProofLinks[task.id]}
@@ -303,8 +303,7 @@ export default function Earn() {
                             </button>
                           </div>
                         )}
-                       </button>
-
+                      
                         {/* Admin Verification (Twisha Only) */}
                         {state.studentId === 'Twisha' && task.status === 'Pending' && task.proofLink && (
                           <div className="flex gap-2 mt-2">
