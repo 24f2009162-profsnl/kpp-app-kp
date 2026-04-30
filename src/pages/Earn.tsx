@@ -518,7 +518,7 @@ export default function Earn() {
                         ? 'bg-slate-900 dark:bg-slate-800 text-white hover:bg-indigo-600 active:scale-95' 
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                     }`}
-                  >
+                     
                     {state.kppPoints >= item.price ? 'Redeem Now' : 'Insufficient Points'}
                   </button>
                 </div>
